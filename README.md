@@ -26,8 +26,26 @@ is a development-tooling template, not an application skeleton.
 | rustfmt | Formatting | Shipped as a Rust toolchain component; run through `cargo fmt`. |
 | Clippy | Lints | Shipped as a Rust toolchain component; run through `cargo clippy`. |
 
-The lint levels the whole project shares live in `Cargo.toml` under
-`[lints]`, so bacon, Clippy locally and CI all agree on what "lint clean" means.
+The lints the whole project shares live in `Cargo.toml` under `[lints]`, so
+bacon, Clippy locally and CI all agree on what "lint clean" means. `clippy.toml`
+holds their *configuration*, as opposed to their levels.
+
+`unwrap`, `expect` and `panic!` are denied, so a failure is returned as an error
+instead of aborting the process. Tests are the exception, and the exemption is
+declared once in `clippy.toml` rather than repeated as `#[allow(...)]`
+attributes in every test file:
+
+```toml
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+```
+
+That covers unit tests in `#[cfg(test)]` modules and integration tests under
+`tests/` alike, so a new test file needs no attribute of its own. It affects only
+the three restriction lints named after them: a test that unwraps something the
+compiler can see through still trips `unnecessary_literal_unwrap`, because that
+lint is about the code being pointless, not about panicking.
 
 ## Start a new project from the template
 
