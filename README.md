@@ -241,7 +241,7 @@ is one place to read the policy. Change a level there to tighten or relax it.
 `mise.toml` enables the `mr_boxington` option on the `rust` tool:
 
 ```toml
-rust = { version = "1.98.1", profile = "minimal", components = ["clippy", "rustfmt"], mr_boxington = true }
+rust = { version = "1.99.0", profile = "minimal", components = ["clippy", "rustfmt"], mr_boxington = true }
 mr-boxington = "1.23.0"
 ```
 
@@ -305,6 +305,8 @@ Four things move together, and none of them updates the others:
 1. **Rust** — `mise.toml` (`[tools] rust`) **and** `rust-toolchain.toml`
    (`channel`, and `components` if you change them). `rust-version` in
    `Cargo.toml` is the minimum supported version and does not have to match.
+   A new compiler version can also introduce new Clippy lints, so run
+   `mise run ci` after bumping one.
 2. **`mbx`** — `mise.toml` (`mr-boxington`) **and** the `version:` input of
    `jdx/mr-boxington-action` in `.github/workflows/ci.yml`, so one `mbx` version
    reads and writes the cache.
