@@ -44,8 +44,11 @@ cocogitto = "7.0.0"
 # ---------------------------------------------------------------------------
 
 [tasks.setup]
-description = "Install the Git hooks and validate the hk configuration"
-run = ["hk validate", "hk install"]
+description = "Validate the hk configuration and install the Git hooks"
+# `--mise` makes the installed hooks run through `mise x`, so they work in a
+# shell where mise is not activated as long as mise is on PATH. On Git 2.54+
+# hk writes this into .git/config as a config-based hook instead of a script.
+run = ["hk validate", "hk install --mise"]
 
 [tasks.fmt]
 description = "Format Rust code in place"
