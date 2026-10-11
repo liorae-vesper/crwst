@@ -74,8 +74,15 @@ echo 'eval "$(mise activate zsh)"' >> ~/.zshrc
 ```
 
 …or skip activation and use mise's shims, which are enough for `mise run` and
-for the Git hooks. If mise asks you to trust the project configuration the first
-time, run `mise trust` and review `mise.toml`.
+for the Git hooks.
+
+Run `mise trust` once per clone. Until then mise prints `mise.toml is not
+trusted`: `mise.toml` carries tool options (`mr_boxington`, `components`,
+`locked`), so mise cannot treat it as an inert file. The commands that execute
+project code — `mise run`, `mise install`, `mise exec`, `mise watch`, and the Git
+hooks, which go through `mise x` — trust their active config automatically, and
+in CI mise trusts every config, so the warning never blocks a build. Other
+commands, such as `mise ls`, may skip the project config until you trust it.
 
 **mise 2026.9.2 or newer is required.** The `mr_boxington` option on the `rust`
 tool uses native mise integration added in that release; on an older mise the

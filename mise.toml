@@ -17,7 +17,10 @@ locked = true
 # true` makes mise run `cargo` through `mbx` inside `mise run` tasks and `mise
 # exec` (requires mise >= 2026.9.2). The separate `mr-boxington` entry below is
 # the program that option drives: both entries are required.
-rust = { version = "1.98.1", profile = "minimal", components = ["clippy", "rustfmt"], mr_boxington = true }
+rust = { version = "1.98.1", profile = "minimal", components = [
+  "clippy",
+  "rustfmt",
+], mr_boxington = true }
 mr-boxington = "1.23.0"
 
 # Git hooks and Conventional Commits / release management.
