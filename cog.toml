@@ -1,33 +1,22 @@
 #:schema https://docs.cocogitto.io/cog-schema.json
-# cocogitto: Conventional Commits and release management. Docs: https://docs.cocogitto.io
+# cocogitto: Conventional Commits validation. Docs: https://docs.cocogitto.io
 #
-# Three distinct jobs, deliberately kept apart:
-#   * message validation — `cog verify --file <msg>` checks one message; the hk
-#     `commit-msg` hook calls it. `cog check` (the `mise run commits` task) checks
-#     a whole history and is what CI runs, because hooks can be bypassed.
-#   * changelog generation — `cog bump` regenerates CHANGELOG.md from the commits
-#     it releases; `cog changelog` writes one without releasing.
-#   * version management — `cog bump --auto` derives the next version from the
-#     commit types since the last tag, then commits and tags it.
+# cog is this template's commit-message validator, and nothing else. Code style
+# belongs to rustfmt and Clippy; release and changelog tooling is deliberately
+# out of scope here.
+#
+# The same rule is enforced in two places:
+#   * `cog verify --file <msg>` checks a single message. The hk `commit-msg` hook
+#     runs it, so a malformed message never becomes a commit.
+#   * `cog check` (the `mise run commits` task, run by CI) checks a whole history,
+#     because `HK=0` can skip the hook.
+#
+# This file exists so that `cog check` behaves like the hook without flags being
+# repeated on every command line.
 
-# Merge commits are how most contributors integrate work, so a merge message
-# such as "Merge pull request #1" must not be treated as a malformed commit.
+# Merge commits are how most contributors integrate work, so a message such as
+# "Merge pull request #1" must not be treated as a malformed commit.
 ignore_merge_commits = true
 # Same for fixup!/squash!/amend! messages, so `git rebase --autosquash` keeps
-# working between the commit and the rebase.
+# working between the commit and the rebase that consumes it.
 ignore_fixup_commits = true
-
-# Releases are cut on the main line only; running `cog bump` elsewhere fails.
-branch_whitelist = ["main"]
-
-[changelog]
-# The default template needs no hosting details, so the template has none to
-# fill in. Switch to `template = "remote"` and set remote/owner/repository in
-# this section once the project has a public home — see README "Releases".
-path = "CHANGELOG.md"
-
-# Bump profiles let `cog bump --hook-profile <name>` run extra hooks. A hook that
-# rewrites Cargo.toml's version belongs here; it is left out because the usual
-# way to do it (`cargo set-version`) needs `cargo-edit`, which this template does
-# not install. See README "Releases".
-[bump_profiles]

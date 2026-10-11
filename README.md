@@ -17,7 +17,7 @@ is a development-tooling template, not an application skeleton.
 | [mise](https://mise.jdx.dev) | Tool versions, environment, task runner | Pins every tool and gives one command interface (`mise run <task>`). It replaces a `just`/`make` file, so there is one task definition rather than two. |
 | [mr-boxington](https://mr-boxington.jdx.dev) (`mbx`) | Shared compiler cache | Reuses Cargo compilations across checkouts, worktrees and CI. Enabled through mise, so plain `cargo` is cached with no extra wrapper to remember. |
 | [hk](https://hk.jdx.dev) | Git hooks | Runs the mise tasks as hooks. Configuring hooks here rather than in a shell script keeps hook and CI behaviour in sync. |
-| [Cocogitto](https://docs.cocogitto.io) (`cog`) | Conventional Commits, changelog, releases | Validates commit messages, generates `CHANGELOG.md`, and derives the next version from commit types. |
+| [Cocogitto](https://docs.cocogitto.io) (`cog`) | Conventional Commits validation | Checks that every commit message follows the Conventional Commits spec. It is the only tool here that inspects history instead of code, and it keeps a shared repository's log parseable and readable. |
 | [cargo-deny](https://embarkstudios.github.io/cargo-deny/) | Dependency **policy** | Bans `*` requirements, duplicate crates and unknown registries, and enforces a licence allow-list. |
 | [cargo-audit](https://rustsec.org) | Dependency **vulnerabilities** | Checks `Cargo.lock` against the RustSec advisory database. |
 | [cargo-nextest](https://nexte.st) | Test runner | Faster, per-test parallel test runs with profiles for local and CI use. |
@@ -143,7 +143,6 @@ and nowhere else, so local runs, hooks and CI cannot drift apart.
 | `check` | `fmt-check` + `clippy` + `test` + `unused` — the fast local gates | hooks, CI |
 | `ci` | `check` + `audit` — everything CI requires | you |
 | `commits` | `cog check`: every commit message is Conventional Commits | CI |
-| `release` | `cog bump --auto`: derives the version, writes `CHANGELOG.md`, commits and tags | you |
 | `bacon` | Runs bacon in the foreground | you |
 | `setup` | Validates `hk.pkl` and installs the Git hooks | once per clone |
 
@@ -192,16 +191,18 @@ HK=0 git commit -m "wip: needs work"     # skip hk for this commit
 git commit --no-verify                   # skip Git hooks entirely
 ```
 
-Cocogitto's three jobs are kept separate on purpose:
+Cocogitto owns commit-message validation, and nothing else:
 
-* **Message validation** — `cog verify --file <msg>` for one message (the hook),
-  `mise run commits` (`cog check`) for a whole history.
-* **Changelog generation** — `cog bump` regenerates `CHANGELOG.md` from the
-  commits it releases; `cog changelog` writes one without releasing.
-* **Version management** — `mise run release` (`cog bump --auto`) reads the
-  commit types since the last tag, picks major/minor/patch, writes the
-  changelog, then commits and tags. `branch_whitelist = ["main"]` in `cog.toml`
-  keeps releases on the main line.
+* `cog verify --file <msg>` checks a single message. The `commit-msg` hook runs
+  this, so a malformed message never becomes a commit.
+* `mise run commits` (`cog check`) checks a whole history. This is what CI runs,
+  because `HK=0` can skip the hook.
+
+`cog.toml` holds the two settings that both of them need —
+`ignore_merge_commits` and `ignore_fixup_commits` — so `cog check` behaves like
+the hook without flags being repeated on every command line. A merge commit or
+a `fixup!` message therefore passes, while anything else must be a Conventional
+Commit.
 
 ## Dependency auditing
 
@@ -329,12 +330,13 @@ are needed to compile and test the crate. `mbx`, `hk`, `cog`, `bacon`,
 and CI conveniences; `mise run check` is the closest thing to a required gate,
 and `cargo test` works without any of them.
 
-**`cog bump` does not update the version in `Cargo.toml`.** Cocogitto tags the
-release and writes the changelog; rewriting a manifest is a job for a bump
-profile hook, and the usual tool for it (`cargo set-version`, from `cargo-edit`)
-is not installed here, to keep the tool list short. Either bump the version in
-`Cargo.toml` in the same commit, or add `cargo-edit` and put the hook in
-`[bump_profiles]` in `cog.toml`.
+**Cocogitto is scoped to commit-message validation.** It checks the message
+format only: it does not write `CHANGELOG.md` or derive versions. Both are real
+Cocogitto features (`cog changelog`, `cog bump`, `[bump_profiles]`), left out
+because a release process is specific to a project — and because `cog bump`
+would still need `cargo-edit`'s `cargo set-version` to keep `Cargo.toml`'s
+version in step. Add them back in `cog.toml` plus a `mise` task when the project
+has a release flow of its own.
 
 **`bacon.toml` repeats the Clippy and test flags from `mise.toml`.** bacon runs
 Cargo directly in its watch loop; it is a convenience layer and nothing in CI

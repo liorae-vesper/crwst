@@ -23,7 +23,7 @@ rust = { version = "1.98.1", profile = "minimal", components = [
 ], mr_boxington = true }
 mr-boxington = "1.23.0"
 
-# Git hooks and Conventional Commits / release management.
+# Git hooks and Conventional Commits validation.
 hk = "2.5.0"
 cocogitto = "7.0.0"
 
@@ -83,12 +83,6 @@ description = "Check every commit message against Conventional Commits"
 # A whole-history pass. The hk `commit-msg` hook only ever sees one message, so
 # this is the check CI runs, where a bypassed hook cannot hide.
 run = "cog check"
-
-[tasks.release]
-description = "Cut a release: derive the version, write CHANGELOG.md, commit and tag"
-# `cog bump --auto` decides the version from the commit types since the last tag.
-confirm = "Cut a release with `cog bump --auto`? This commits and tags."
-run = "cog bump --auto"
 
 [tasks.deny]
 description = "Check dependency policy: wildcards, duplicates, licenses, sources"
